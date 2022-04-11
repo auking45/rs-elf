@@ -1,4 +1,5 @@
 use derive_try_from_primitive::TryFromPrimitive;
+use nom::Offset;
 use std::convert::TryFrom;
 use std::fmt;
 
@@ -38,6 +39,22 @@ impl File {
 
         let res = Self { r#type, machine };
         Ok((i, res))
+    }
+
+    pub fn parse_or_print_error(i: parse::Input) -> Option<Self> {
+        match Self::parse(i) {
+            Ok((_, file)) => Some(file),
+            Err(nom::Err::Failure(err)) | Err(nom::Err::Error(err)) => {
+                eprintln!("Parsing failed:");
+                for (input, err) in err.errors {
+                    let offset = i.offset(input);
+                    eprintln!("{:?} at position {}:", err, offset);
+                    eprintln!("{:?}", HexDump(input));
+                }
+                None
+            }
+            Err(_) => panic!("unexpected nom error"),
+        }
     }
 }
 
