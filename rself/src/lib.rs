@@ -1,10 +1,12 @@
 use derive_try_from_primitive::TryFromPrimitive;
+use std::convert::TryFrom;
 
 mod parse;
 
 #[derive(Debug)]
 pub struct File {
-
+    pub r#type: Type,
+    pub machine: Machine,
 }
 
 impl File {
@@ -15,6 +17,8 @@ impl File {
             bytes::complete::{tag, take},
             error::context,
             sequence::tuple,
+            combinator::map,
+            number::complete::le_u16,
         };
 
         let (i, _) = tuple((
@@ -25,7 +29,14 @@ impl File {
             context("OS ABI", nom::branch::alt((tag(&[0x0]), tag(&[0x3])))),
             context("Padding", take(8_usize)),
         ))(i)?;
-        Ok((i, Self {}))
+
+        let (i, (r#type, machine)) = tuple((
+            context("Type", map(le_u16, |x| Type::try_from(x).unwrap())),
+            context("Machine", map(le_u16, |x| Machine::try_from(x).unwrap())),
+        ))(i)?;
+
+        let res = Self { r#type, machine };
+        Ok((i, res))
     }
 }
 
