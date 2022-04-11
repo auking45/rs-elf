@@ -1,9 +1,7 @@
 use derive_try_from_primitive::TryFromPrimitive;
 use nom::{
     bytes::complete::{tag, take},
-    combinator::{map, map_res},
-    error::{context, ErrorKind},
-    number::complete::le_u16,
+    error::context,
     sequence::tuple,
     Offset,
 };
@@ -31,10 +29,7 @@ impl File {
             context("Padding", take(8_usize)),
         ))(i)?;
 
-        let (i, (r#type, machine)) = tuple((
-            context("Type", map(le_u16, |x| Type::try_from(x).unwrap())),
-            context("Machine", map(le_u16, |x| Machine::try_from(x).unwrap())),
-        ))(i)?;
+        let (i, (r#type, machine)) = tuple((Type::parse, Machine::parse))(i)?;
 
         let res = Self { r#type, machine };
         Ok((i, res))
@@ -67,6 +62,8 @@ pub enum Type {
     Core = 0x4,
 }
 
+impl_parse_for_enum!(Type, le_u16);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 #[repr(u16)]
 pub enum Machine {
@@ -74,14 +71,7 @@ pub enum Machine {
     X86_64 = 0x3e,
 }
 
-impl Machine {
-    pub fn parse(i: parse::Input) -> parse::Result<Self> {
-        context(
-            "Machine",
-            map_res(le_u16, |x| Self::try_from(x).map_err(|_| ErrorKind::Alt)),
-        )(i)
-    }
-}
+impl_parse_for_enum!(Machine, le_u16);
 
 pub struct HexDump<'a>(&'a [u8]);
 
