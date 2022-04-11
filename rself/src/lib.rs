@@ -1,5 +1,12 @@
 use derive_try_from_primitive::TryFromPrimitive;
-use nom::Offset;
+use nom::{
+    bytes::complete::{tag, take},
+    combinator::{map, map_res},
+    error::{context, ErrorKind},
+    number::complete::le_u16,
+    sequence::tuple,
+    Offset,
+};
 use std::convert::TryFrom;
 use std::fmt;
 
@@ -15,14 +22,6 @@ impl File {
     const MAGIC: &'static [u8] = &[0x7f, 0x45, 0x4c, 0x46];
 
     pub fn parse(i: parse::Input) -> parse::Result<Self> {
-        use nom::{
-            bytes::complete::{tag, take},
-            error::context,
-            sequence::tuple,
-            combinator::map,
-            number::complete::le_u16,
-        };
-
         let (i, _) = tuple((
             context("Magic", tag(Self::MAGIC)),
             context("Class", tag(&[0x2])),
@@ -75,6 +74,14 @@ pub enum Machine {
     X86_64 = 0x3e,
 }
 
+impl Machine {
+    pub fn parse(i: parse::Input) -> parse::Result<Self> {
+        map_res(le_u16, |x| match Self::try_from(x) {
+            Ok(x) => Ok(x),
+            Err(_) => Err(ErrorKind::Alt),
+        })(i)
+    }
+}
 
 pub struct HexDump<'a>(&'a [u8]);
 
@@ -89,8 +96,8 @@ impl<'a> fmt::Debug for HexDump<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::Type;
     use super::Machine;
+    use super::Type;
     use std::convert::TryFrom;
 
     #[test]
