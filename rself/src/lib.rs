@@ -1,5 +1,6 @@
 use derive_try_from_primitive::TryFromPrimitive;
 use std::convert::TryFrom;
+use std::fmt;
 
 mod parse;
 
@@ -58,6 +59,16 @@ pub enum Machine {
 }
 
 
+pub struct HexDump<'a>(&'a [u8]);
+
+impl<'a> fmt::Debug for HexDump<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for &x in self.0.iter().take(20) {
+            write!(f, "{:02x} ", x)?;
+        }
+        Ok(())
+    }
+}
 
 #[cfg(test)]
 mod tests {
