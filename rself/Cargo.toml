@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 nom = "7.1.0"
 derive-try-from-primitive = "1.0.0"
+derive_more = "0.99.17"
