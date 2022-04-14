@@ -12,10 +12,14 @@ int main() {
 	printf("        main @ %p\n", &main);
 	printf("instructions @ %p\n", instructions);
 
-	printf("making instructions executable...\n");
+	size_t region = (size_t)instructions;
+	region = region & (~0xFFF);
+	printf("        page @ %p\n", region);
+
+	printf("making page executable...\n");
 	int ret = mprotect(
-		(void*)instructions,
-		instructions_len,
+		(void*)region,
+		0x1000,
 		PROT_READ | PROT_EXEC
 	);
 	if (ret != 0) {
