@@ -122,6 +122,19 @@ impl Addr {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u32)]
+pub enum SegmentType {
+    Null = 0x0,
+    Load = 0x1,
+    Dynamic = 0x2,
+    Interp = 0x3,
+    Note = 0x4,
+}
+
+impl_parse_for_enum!(SegmentType, le_u32);
+
+
 pub struct HexDump<'a>(&'a [u8]);
 
 impl<'a> fmt::Debug for HexDump<'a> {
