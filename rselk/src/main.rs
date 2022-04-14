@@ -1,3 +1,4 @@
+use region::{protect, Protection};
 use std::{env, error::Error, fs};
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -20,12 +21,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("segment with entry point not found");
     ndisasm(&code_ph.data[..], file.entry_point)?;
 
-    let code = &input[0x1000..];
-    let code = &code[..std::cmp::min(0x25, code.len())];
-
     println!("Executing {:?} in memory...", input_path);
-    let entry_point = code.as_ptr();
-    println!("Entry point: {:?}", entry_point);
+    let code = &code_ph.data;
+    unsafe {
+        protect(code.as_ptr(), code.len(), Protection::READ_WRITE_EXECUTE)?;
+    }
+
+    let entry_offset = file.entry_point - code_ph.vaddr;
+    let entry_point = unsafe { code.as_ptr().add(entry_offset.into()) };
+    println!("        code @ {:?}", code);
+    println!("entry offset @ {:?}", entry_offset);
+    println!("entry point  @ {:?}", entry_point);
+
     unsafe {
         jmp(entry_point);
     }

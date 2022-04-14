@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 rself = { path = "../rself" }
+region = "2.2.0"
