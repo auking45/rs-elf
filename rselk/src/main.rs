@@ -17,6 +17,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let code = &code[..std::cmp::min(0x25, code.len())];
     ndisasm(code)?;
 
+    println!("Executing {:?} in memory...", input_path);
+    let entry_point = code.as_ptr();
+    println!("Entry point: {:?}", entry_point);
+    unsafe {
+        jmp(entry_point);
+    }
+
     Ok(())
 }
 
@@ -34,4 +41,9 @@ fn ndisasm(code: &[u8]) -> Result<(), Box<dyn Error>> {
     println!("{}", String::from_utf8_lossy(&output.stdout));
 
     Ok(())
+}
+
+unsafe fn jmp(addr: *const u8) {
+    let fn_ptr: fn() = std::mem::transmute(addr);
+    fn_ptr();
 }
